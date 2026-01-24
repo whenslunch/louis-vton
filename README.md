@@ -1,4 +1,4 @@
-# IB-VTON: In-Browser Virtual Try-On
+# Louis-VTON: Virtual Try-On
 
 A browser extension that lets you virtually try on clothing from fashion retail websites using AI-powered image generation.
 
@@ -24,15 +24,15 @@ A browser extension that lets you virtually try on clothing from fashion retail 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/whenslunch/ib-vton.git
-cd ib-vton
+git clone https://github.com/whenslunch/louis-vton.git
+cd louis-vton
 ```
 
 ### 2. Create conda environment
 
 ```bash
-conda create -n ib-vton python=3.13 -y
-conda activate ib-vton
+conda create -n louis-vton python=3.13 -y
+conda activate louis-vton
 pip install -r requirements.txt
 ```
 
@@ -77,7 +77,7 @@ python main.py
 ### Start the API server
 
 ```bash
-conda activate ib-vton
+conda activate louis-vton
 python -m uvicorn api.server:app --host 0.0.0.0 --port 8000
 ```
 
@@ -85,7 +85,7 @@ python -m uvicorn api.server:app --host 0.0.0.0 --port 8000
 
 1. Navigate to a supported fashion website (e.g., hm.com, zara.com)
 2. Open a product page
-3. Click the IB-VTON extension icon
+3. Click the Louis-VTON extension icon
 4. Upload your reference photo (first time only)
 5. Click "Try It On"
 6. Wait ~30 seconds for the result
@@ -154,11 +154,11 @@ python -m uvicorn api.server:app --host 0.0.0.0 --port 8000
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| `TryOnPipeline` | `ib_vton/pipeline/tryon_pipeline.py` | Orchestrates the full try-on flow |
-| `GarmentExtractor` | `ib_vton/agents/garment_extractor.py` | Extracts clean garment attributes |
-| `FluxPromptGeneratorAgent` | `ib_vton/agents/flux_prompt_generator.py` | Generates FLUX-optimized prompts |
-| `ComfyUIClient` | `ib_vton/services/comfyui_client.py` | Interfaces with ComfyUI API |
-| `PipelineConfig` | `ib_vton/config.py` | Configuration management |
+| `TryOnPipeline` | `louis_vton/pipeline/tryon_pipeline.py` | Orchestrates the full try-on flow |
+| `GarmentExtractor` | `louis_vton/agents/garment_extractor.py` | Extracts clean garment attributes |
+| `FluxPromptGeneratorAgent` | `louis_vton/agents/flux_prompt_generator.py` | Generates FLUX-optimized prompts |
+| `ComfyUIClient` | `louis_vton/services/comfyui_client.py` | Interfaces with ComfyUI API |
+| `PipelineConfig` | `louis_vton/config.py` | Configuration management |
 
 ### Data Models
 
@@ -185,7 +185,7 @@ class GarmentAttributes:
 ## Project Structure
 
 ```
-ib-vton/
+louis-vton/
 ├── api/
 │   └── server.py              # FastAPI server
 ├── extension-scraper/
@@ -193,7 +193,7 @@ ib-vton/
 │   ├── background.js          # Service worker
 │   ├── popup/                 # Extension UI
 │   └── icons/                 # Extension icons
-├── ib_vton/
+├── louis_vton/
 │   ├── agents/                # LLM agents
 │   │   ├── garment_extractor.py
 │   │   └── flux_prompt_generator.py
@@ -210,11 +210,11 @@ ib-vton/
 
 ```bash
 # Run all tests
-conda activate ib-vton
+conda activate louis-vton
 python -m pytest tests/ -v
 
 # Run with coverage
-python -m pytest tests/ --cov=ib_vton --cov=api --cov-report=term-missing
+python -m pytest tests/ --cov=louis_vton --cov=api --cov-report=term-missing
 ```
 
 ## Supported Retailers

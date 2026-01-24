@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "IB-VTON",
+  "name": "Louis-VTON",
   "version": "2.1.0",
   "description": "In-Browser Virtual Try-On - Try on clothing from fashion websites using AI",
   "permissions": [

@@ -1,7 +1,7 @@
 """Unit tests for GarmentExtractor - attribute extraction from text and images."""
 
 import pytest
-from ib_vton.agents.garment_extractor import GarmentExtractor, GarmentAttributes
+from louis_vton.agents.garment_extractor import GarmentExtractor, GarmentAttributes
 
 
 class TestGarmentAttributes:

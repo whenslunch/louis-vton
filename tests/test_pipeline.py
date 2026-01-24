@@ -5,8 +5,8 @@ import base64
 from pathlib import Path
 from unittest.mock import AsyncMock, patch, MagicMock
 
-from ib_vton.pipeline import TryOnPipeline
-from ib_vton.config import PipelineConfig
+from louis_vton.pipeline import TryOnPipeline
+from louis_vton.config import PipelineConfig
 
 
 class TestPipelineInitialization:
@@ -132,7 +132,7 @@ class TestRetailerDescriptions:
     ])
     def test_description_parsing(self, description, should_contain):
         """Various retailer descriptions are handled."""
-        from ib_vton.agents.flux_prompt_generator import FluxPromptGeneratorAgent
+        from louis_vton.agents.flux_prompt_generator import FluxPromptGeneratorAgent
         
         generator = FluxPromptGeneratorAgent()
         prompt = generator.generate_simple(description, "person")

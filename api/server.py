@@ -13,12 +13,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from ib_vton.config import PipelineConfig
-from ib_vton.pipeline import TryOnPipeline
+from louis_vton.config import PipelineConfig
+from louis_vton.pipeline import TryOnPipeline
 
 
 app = FastAPI(
-    title="IB-VTON API",
+    title="Louis-VTON API",
     description="In-Browser Virtual Try-On using FLUX 2 Klein",
     version="2.0.0",
 )

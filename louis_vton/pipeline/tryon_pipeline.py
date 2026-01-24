@@ -59,7 +59,7 @@ class TryOnPipeline:
         
         print()
         print("═" * 60)
-        print(f"  🧥 IB-VTON")
+        print(f"  🧥 Louis-VTON")
         print(f"  Session: {session.session_id}")
         print("═" * 60)
         print()

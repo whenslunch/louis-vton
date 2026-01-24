@@ -1,8 +1,8 @@
 """Unit tests for FluxPromptGeneratorAgent - prompt generation."""
 
 import pytest
-from ib_vton.agents.flux_prompt_generator import FluxPromptGeneratorAgent
-from ib_vton.agents.garment_extractor import GarmentAttributes
+from louis_vton.agents.flux_prompt_generator import FluxPromptGeneratorAgent
+from louis_vton.agents.garment_extractor import GarmentAttributes
 
 
 class TestPromptGeneratorSimple:

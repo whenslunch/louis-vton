@@ -1,4 +1,4 @@
-# IB-VTON Dependencies
+# Louis-VTON Dependencies
 # Core framework
 agent-framework[azure]
 
