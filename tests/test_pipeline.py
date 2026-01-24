@@ -19,8 +19,6 @@ class TestPipelineInitialization:
         
         assert pipeline.config is not None
         assert pipeline.comfyui is not None
-        assert pipeline.prompt_generator is not None
-        assert pipeline.garment_extractor is not None
     
     def test_pipeline_has_required_methods(self):
         """Pipeline exposes required methods."""

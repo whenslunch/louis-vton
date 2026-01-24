@@ -117,13 +117,13 @@ class ComfyUIClient:
         """Build FLUX 2 Klein 9B workflow for virtual try-on.
         
         This workflow uses two reference images:
-        - Reference image 1 (node 76): Model/person photo
+        - Reference image 1 (node 76): Model/person photo  
         - Reference image 2 (node 81): Garment to wear
         
-        Based on: image_flux2_klein_image_edit-9b_distilled_vTON.json
+        Uses Reference Conditioning subgraphs to condition on both images.
         """
         return {
-            # Load UNET model (FLUX 2 Klein 9B FP8)
+            # Models
             "110": {
                 "class_type": "UNETLoader",
                 "inputs": {
@@ -131,7 +131,6 @@ class ComfyUIClient:
                     "weight_dtype": "default",
                 }
             },
-            # Load CLIP text encoder (Qwen 3 8B)
             "111": {
                 "class_type": "CLIPLoader",
                 "inputs": {
@@ -140,14 +139,13 @@ class ComfyUIClient:
                     "device": "default",
                 }
             },
-            # Load VAE
             "113": {
                 "class_type": "VAELoader",
                 "inputs": {
                     "vae_name": "flux2-vae.safetensors",
                 }
             },
-            # Load model/person image (reference image 1)
+            # Load person image (reference image 1)
             "76": {
                 "class_type": "LoadImage",
                 "inputs": {
@@ -161,7 +159,7 @@ class ComfyUIClient:
                     "image": garment_filename,
                 }
             },
-            # Scale model image to ~1 megapixel
+            # Scale person image
             "114": {
                 "class_type": "ImageScaleToTotalPixels",
                 "inputs": {
@@ -171,7 +169,7 @@ class ComfyUIClient:
                     "resolution_steps": 1,
                 }
             },
-            # Scale garment image to ~1 megapixel
+            # Scale garment image
             "115": {
                 "class_type": "ImageScaleToTotalPixels",
                 "inputs": {
@@ -181,14 +179,14 @@ class ComfyUIClient:
                     "resolution_steps": 1,
                 }
             },
-            # Get image size for latent
+            # Get image size from person image
             "120": {
                 "class_type": "GetImageSize",
                 "inputs": {
                     "image": ["114", 0],
                 }
             },
-            # Text encode - positive prompt
+            # Text encode positive prompt
             "112": {
                 "class_type": "CLIPTextEncode",
                 "inputs": {
@@ -203,15 +201,31 @@ class ComfyUIClient:
                     "conditioning": ["112", 0],
                 }
             },
-            # VAE Encode model image for reference conditioning
-            "vae_encode_model": {
+            # VAE Encode person image
+            "vae_encode_person": {
                 "class_type": "VAEEncode",
                 "inputs": {
                     "pixels": ["114", 0],
                     "vae": ["113", 0],
                 }
             },
-            # VAE Encode garment image for reference conditioning  
+            # Reference Latent for positive (person image)
+            "ref_positive_person": {
+                "class_type": "ReferenceLatent",
+                "inputs": {
+                    "conditioning": ["112", 0],
+                    "latent": ["vae_encode_person", 0],
+                }
+            },
+            # Reference Latent for negative (person image)
+            "ref_negative_person": {
+                "class_type": "ReferenceLatent",
+                "inputs": {
+                    "conditioning": ["118", 0],
+                    "latent": ["vae_encode_person", 0],
+                }
+            },
+            # VAE Encode garment image
             "vae_encode_garment": {
                 "class_type": "VAEEncode",
                 "inputs": {
@@ -219,39 +233,23 @@ class ComfyUIClient:
                     "vae": ["113", 0],
                 }
             },
-            # Reference latent for positive conditioning (model image)
-            "ref_positive_model": {
-                "class_type": "ReferenceLatent",
-                "inputs": {
-                    "conditioning": ["112", 0],
-                    "latent": ["vae_encode_model", 0],
-                }
-            },
-            # Reference latent for negative conditioning (model image)
-            "ref_negative_model": {
-                "class_type": "ReferenceLatent",
-                "inputs": {
-                    "conditioning": ["118", 0],
-                    "latent": ["vae_encode_model", 0],
-                }
-            },
-            # Reference latent for positive conditioning (garment image) 
+            # Reference Latent for positive (garment - chained after person)
             "ref_positive_garment": {
                 "class_type": "ReferenceLatent",
                 "inputs": {
-                    "conditioning": ["ref_positive_model", 0],
+                    "conditioning": ["ref_positive_person", 0],
                     "latent": ["vae_encode_garment", 0],
                 }
             },
-            # Reference latent for negative conditioning (garment image)
+            # Reference Latent for negative (garment - chained after person)
             "ref_negative_garment": {
                 "class_type": "ReferenceLatent",
                 "inputs": {
-                    "conditioning": ["ref_negative_model", 0],
+                    "conditioning": ["ref_negative_person", 0],
                     "latent": ["vae_encode_garment", 0],
                 }
             },
-            # Empty latent for generation
+            # Empty latent for generation (uses person image dimensions)
             "119": {
                 "class_type": "EmptyFlux2LatentImage",
                 "inputs": {
@@ -267,14 +265,14 @@ class ComfyUIClient:
                     "noise_seed": seed,
                 }
             },
-            # Sampler selection
+            # Sampler
             "104": {
                 "class_type": "KSamplerSelect",
                 "inputs": {
                     "sampler_name": "euler",
                 }
             },
-            # FLUX 2 Scheduler (4 steps for distilled model)
+            # Scheduler (4 steps for distilled model)
             "105": {
                 "class_type": "Flux2Scheduler",
                 "inputs": {
@@ -283,7 +281,7 @@ class ComfyUIClient:
                     "height": ["120", 1],
                 }
             },
-            # CFG Guider
+            # CFG Guider with both reference conditionings
             "106": {
                 "class_type": "CFGGuider",
                 "inputs": {
@@ -304,7 +302,7 @@ class ComfyUIClient:
                     "latent_image": ["119", 0],
                 }
             },
-            # Decode to image
+            # VAE Decode
             "108": {
                 "class_type": "VAEDecode",
                 "inputs": {

@@ -296,32 +296,142 @@ function scrapeGarmentData() {
     images.push(url);
   });
   
-  // Get product description
-  let description = '';
+  // ========================================
+  // INTELLIGENT PRODUCT DESCRIPTION SCRAPING
+  // ========================================
   
-  // Try common selectors
-  const descSelectors = [
-    '[class*="product-description"]',
-    '[class*="productDescription"]',
-    '[class*="product-detail"]',
-    '[data-testid*="description"]',
-    '.pdp-description',
-    '#productDescription',
+  const descriptionParts = [];
+  
+  // 1. Get product title (h1)
+  const titleEl = document.querySelector('h1');
+  if (titleEl?.textContent?.trim()) {
+    descriptionParts.push(titleEl.textContent.trim());
+  }
+  
+  // 2. Look for JSON-LD structured data (most reliable)
+  document.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
+    try {
+      let data = JSON.parse(script.textContent);
+      // Handle arrays (some sites wrap in array)
+      if (Array.isArray(data)) data = data[0];
+      // Look for Product schema
+      if (data['@type'] === 'Product' || data.name) {
+        if (data.description && !descriptionParts.includes(data.description)) {
+          descriptionParts.push(data.description);
+        }
+        if (data.material) {
+          descriptionParts.push('Material: ' + data.material);
+        }
+        if (data.color) {
+          descriptionParts.push('Color: ' + data.color);
+        }
+      }
+    } catch (e) {}
+  });
+  
+  // 3. Look for expandable sections (Description, Fit, Materials, etc.)
+  const expandableSectionKeywords = [
+    'description', 'fit', 'material', 'fabric', 'composition',
+    'details', 'product info', 'about', 'specifications'
   ];
   
-  for (const sel of descSelectors) {
+  // Find buttons/headers that might expand sections
+  const expandableSelectors = [
+    'button', '[role="button"]', '[data-accordion]', '[data-toggle]',
+    '.accordion-header', '.accordion-title', '.collapsible-header',
+    '[class*="accordion"]', '[class*="expand"]', '[class*="toggle"]',
+    'summary', '.tab-title', '[role="tab"]'
+  ];
+  
+  expandableSelectors.forEach(selector => {
+    document.querySelectorAll(selector).forEach(el => {
+      const text = el.textContent?.toLowerCase() || '';
+      if (expandableSectionKeywords.some(kw => text.includes(kw))) {
+        // Found a matching section header - get its content
+        // Try to find associated content panel
+        const contentSelectors = [
+          el.nextElementSibling,
+          el.parentElement?.querySelector('[class*="content"]'),
+          el.parentElement?.querySelector('[class*="panel"]'),
+          el.parentElement?.querySelector('[class*="body"]'),
+          document.querySelector(`#${el.getAttribute('aria-controls')}`),
+          el.closest('[class*="accordion"]')?.querySelector('[class*="content"]'),
+        ];
+        
+        for (const content of contentSelectors) {
+          if (content?.textContent?.trim() && content.textContent.trim().length > 20) {
+            const contentText = content.textContent.trim()
+              .replace(/\s+/g, ' ')  // Normalize whitespace
+              .substring(0, 300);
+            if (!descriptionParts.some(p => p.includes(contentText.substring(0, 50)))) {
+              descriptionParts.push(contentText);
+            }
+            break;
+          }
+        }
+      }
+    });
+  });
+  
+  // 4. Look for common description containers
+  const descSelectors = [
+    // Generic
+    '[class*="product-description"]',
+    '[class*="productDescription"]', 
+    '[class*="ProductDescription"]',
+    '[data-testid*="description"]',
+    '[class*="product-detail"]',
+    // H&M specific
+    '.product-description',
+    '[class*="DescriptionAndFit"]',
+    '[class*="Materials"]',
+    '[class*="pdp-description"]',
+    // Common patterns
+    '.description-text',
+    '.product-info',
+    '[itemprop="description"]',
+  ];
+  
+  descSelectors.forEach(sel => {
     const el = document.querySelector(sel);
-    if (el?.textContent?.trim()) {
-      description = el.textContent.trim().substring(0, 500);
-      break;
+    if (el?.textContent?.trim() && el.textContent.trim().length > 20) {
+      const text = el.textContent.trim()
+        .replace(/\s+/g, ' ')
+        .substring(0, 300);
+      // Avoid duplicates
+      if (!descriptionParts.some(p => p.includes(text.substring(0, 50)))) {
+        descriptionParts.push(text);
+      }
     }
+  });
+  
+  // 5. Look for meta tags
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc?.content && !descriptionParts.length) {
+    descriptionParts.push(metaDesc.content);
   }
   
-  // Fallback: get product title
-  if (!description) {
-    const titleEl = document.querySelector('h1');
-    if (titleEl) description = titleEl.textContent.trim();
+  // 6. Look for Open Graph data
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  const ogDesc = document.querySelector('meta[property="og:description"]');
+  if (ogDesc?.content && !descriptionParts.some(p => p.includes(ogDesc.content.substring(0, 30)))) {
+    descriptionParts.push(ogDesc.content);
   }
+  
+  // Combine and clean up
+  let description = descriptionParts
+    .filter(p => p && p.length > 5)
+    .join(' | ')
+    .substring(0, 800);  // Reasonable limit
+  
+  // Remove common noise words
+  description = description
+    .replace(/read more|show more|view details|expand|collapse/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  console.log('[Scraper] Found description:', description?.substring(0, 150));
+  console.log('[Scraper] Description parts:', descriptionParts.length);
   
   return { images, description };
 }

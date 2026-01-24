@@ -39,8 +39,8 @@ output/
 # Model reference images (personal)
 model_reference/
 
-# Keep the images folder but not tracked individually
-# images/
+# Sample images (manual testing/demos)
+images/
 
 # OS
 .DS_Store

@@ -8,9 +8,8 @@ import httpx
 
 from ..config import PipelineConfig
 from ..models import TryOnSession, GarmentSpec
-from ..agents.flux_prompt_generator import FluxPromptGeneratorAgent
-from ..agents.garment_extractor import GarmentExtractor
 from ..services import ComfyUIClient
+from ..utils import build_tryon_prompt
 
 
 class TryOnPipeline:
@@ -33,10 +32,6 @@ class TryOnPipeline:
             config=config.comfyui,
             comfyui_input_dir=config.comfyui_input_dir,
         )
-        
-        # Initialize agents
-        self.prompt_generator = FluxPromptGeneratorAgent()
-        self.garment_extractor = GarmentExtractor()
     
     async def run(
         self,
@@ -73,39 +68,29 @@ class TryOnPipeline:
                 )
             print("✅ ComfyUI connected")
             
-            # Step 1: Extract garment attributes from BOTH text and image
+            # Step 1: Build prompt from raw description (simple string cleaning)
             print()
-            print("🔍 Extracting garment attributes...")
+            print("🔍 Processing garment description...")
             
-            # Use manufacturer description if provided, otherwise just image
-            raw_description = description if description and len(description.strip()) > 20 else None
+            # Use manufacturer description if provided
+            raw_description = description.strip() if description else None
             
             if raw_description:
-                print(f"   📝 Text: {raw_description[:80]}...")
+                print(f"   📝 Raw: {raw_description[:100]}...")
+            else:
+                print("   ⚠️ No product description available - using generic prompt")
             
-            # Extract clean attributes from both sources
-            attributes = await self.garment_extractor.extract(
-                description=raw_description,
-                image_path=garment_image,
-            )
+            # Build prompt using simple string interpolation (no LLM rewording)
+            prompt = build_tryon_prompt(raw_description)
             
-            # Convert to clean description string
-            garment_description = attributes.to_description()
-            print(f"   ✨ Extracted: {garment_description}")
+            print(f"   ✨ Prompt: {prompt}")
             
-            # Save raw and extracted descriptions
+            # Save artifacts
             if raw_description:
                 self._save_artifact(session, "raw_description.txt", raw_description)
-            self._save_artifact(session, "description.txt", garment_description)
-            
-            # Step 2: Generate FLUX prompt using clean attributes
-            print()
-            print("✨ Building prompt...")
-            prompt = self.prompt_generator.generate_from_attributes(attributes)
             self._save_artifact(session, "prompt.txt", prompt)
-            print(f"   \"{prompt[:80]}...\"")
             
-            # Step 3: Generate try-on image
+            # Step 2: Generate try-on image
             print()
             print("🎨 Generating try-on image with FLUX 2 Klein...")
             output_path = session.session_dir / "result.png"

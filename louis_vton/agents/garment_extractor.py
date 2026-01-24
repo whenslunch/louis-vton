@@ -4,7 +4,7 @@ import base64
 from pathlib import Path
 from dataclasses import dataclass
 from azure.identity import AzureCliCredential
-from agent_framework import ChatMessage, TextContent, DataContent
+from agent_framework import ChatMessage, Content
 from agent_framework.azure import AzureOpenAIResponsesClient
 
 
@@ -69,21 +69,19 @@ Return a JSON object with these fields (use null if not mentioned):
 Return ONLY the JSON object, no explanation."""
 
 
-VISION_EXTRACTION_PROMPT = """Analyze this garment image and describe its key visual attributes.
+VISION_EXTRACTION_PROMPT = """You are a fashion analyst. Look at the image and describe what the person is wearing. Focus on the MAIN garment (typically the top/dress, not pants or accessories).
 
-Return a JSON object with these fields (use null if you can't determine):
+After describing, provide a JSON summary:
 {
-  "garment_type": "the type of clothing you see",
-  "color": "the primary color",
-  "fabric": "the apparent fabric/material",
+  "garment_type": "dress/blouse/top/skirt/jacket/etc",
+  "color": "primary color",
+  "fabric": "apparent material",
   "neckline": "neckline style",
-  "sleeves": "sleeve style",
-  "length": "garment length",
-  "fit": "how it fits (fitted, loose, etc.)",
-  "details": ["list", "of", "notable", "visual", "details"]
-}
-
-Return ONLY the JSON object, no explanation."""
+  "sleeves": "sleeve style", 
+  "length": "mini/midi/maxi/cropped/etc",
+  "fit": "fitted/loose/relaxed/A-line",
+  "details": ["notable features"]
+}"""
 
 
 class GarmentExtractor:
@@ -151,7 +149,7 @@ class GarmentExtractor:
         messages = [
             ChatMessage(
                 role="user",
-                content=[TextContent(text=f"Product description:\n{description}")],
+                content=[Content.from_text(f"Product description:\n{description}")],
             )
         ]
         
@@ -194,16 +192,16 @@ class GarmentExtractor:
                 ".gif": "image/gif",
             }.get(suffix, "image/png")
         
-        # Use DataContent with raw bytes (like garment_analyzer does)
+        # Use Content.from_data with raw bytes (like garment_analyzer does)
         message = ChatMessage(
             role="user",
-            contents=[
-                TextContent(text="Analyze this garment:"),
-                DataContent(data=image_bytes, media_type=mime_type),
+            content=[
+                Content.from_text("Look at this clothing image and describe what the person is wearing. Focus on the main garment. Then provide the JSON summary."),
+                Content.from_data(data=image_bytes, media_type=mime_type),
             ],
         )
         
-        response = await agent.run(message)
+        response = await agent.run([message])
         
         # Extract response text
         response_text = ""
@@ -211,6 +209,8 @@ class GarmentExtractor:
             for content in msg.contents:
                 if hasattr(content, 'text'):
                     response_text += content.text
+        
+        print(f"   🔍 Vision response: {response_text[:200]}...")
         
         data = self._parse_json_response(response_text)
         return self._dict_to_attributes(data)

@@ -8,9 +8,9 @@ A browser extension that lets you virtually try on clothing from fashion retail 
 
 - 🛍️ **One-click try-on** from supported fashion websites (H&M, Zara, Aritzia, Gap, Nordstrom, etc.)
 - 📸 **Upload your photo** once and it persists across sessions
-- 🎨 **FLUX 2 Klein** for high-quality, identity-preserving image generation
-- 🧠 **Smart garment extraction** from product descriptions and images
-- ⚡ **Fast generation** (~30 seconds per try-on)
+- 🎨 **FLUX 2 Klein** with Reference Conditioning for high-quality, identity-preserving image generation
+- 🧠 **Smart description cleaning** extracts key garment features from product text
+- ⚡ **Fast generation** (~30 seconds per try-on, no LLM calls in the pipeline)
 
 ## Prerequisites
 
@@ -106,10 +106,10 @@ python -m uvicorn api.server:app --host 0.0.0.0 --port 8000
 │                      FastAPI Server                              │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │                    TryOnPipeline                          │   │
-│  │  ┌────────────────┐  ┌──────────────┐  ┌──────────────┐  │   │
-│  │  │ GarmentExtract │→ │PromptGenerat │→ │ ComfyUI      │  │   │
-│  │  │ (LLM + Vision) │  │ (Templates)  │  │ Client       │  │   │
-│  │  └────────────────┘  └──────────────┘  └──────────────┘  │   │
+│  │  ┌────────────────┐  ┌──────────────────────────────┐    │   │
+│  │  │ Description    │→ │ ComfyUI Client               │    │   │
+│  │  │ Cleaner (Regex)│  │ (FLUX 2 Klein Workflow)      │    │   │
+│  │  └────────────────┘  └──────────────────────────────┘    │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -132,19 +132,15 @@ python -m uvicorn api.server:app --host 0.0.0.0 --port 8000
 
 1. **Image Reception**: Browser extension sends base64-encoded garment image, model photo, and product description to the API
 
-2. **Garment Extraction** (`GarmentExtractor`):
-   - **Text extraction**: LLM parses product description for garment attributes (type, color, fabric, neckline, etc.)
-   - **Vision extraction**: LLM analyzes garment image for visual attributes
-   - **Merge + Fallback**: Combines both sources with keyword-based fallback for reliability
+2. **Description Cleaning** (`build_tryon_prompt`):
+   - **Regex-based cleaning**: Removes marketing noise, size guides, SKUs, and irrelevant text
+   - **Feature extraction**: Identifies key garment features (neckline, sleeves, fabric, fit)
+   - **Template interpolation**: Builds FLUX-optimized prompt with extracted features
+   - No LLM calls - fast and reliable string processing
 
-3. **Prompt Generation** (`FluxPromptGeneratorAgent`):
-   - Converts structured `GarmentAttributes` to natural language prompt
-   - Uses template-based approach (not LLM) for reliability
-   - Includes identity preservation instructions for FLUX
-
-4. **Image Generation** (`ComfyUIClient`):
-   - Uploads images to ComfyUI input directory
-   - Injects prompt and image paths into workflow JSON
+3. **Image Generation** (`ComfyUIClient`):
+   - Uploads person and garment images to ComfyUI input directory
+   - Builds FLUX 2 Klein workflow with Reference Conditioning (two images)
    - Queues workflow via WebSocket API
    - Polls for completion and retrieves result
 
@@ -155,8 +151,7 @@ python -m uvicorn api.server:app --host 0.0.0.0 --port 8000
 | Component | File | Purpose |
 |-----------|------|---------|
 | `TryOnPipeline` | `louis_vton/pipeline/tryon_pipeline.py` | Orchestrates the full try-on flow |
-| `GarmentExtractor` | `louis_vton/agents/garment_extractor.py` | Extracts clean garment attributes |
-| `FluxPromptGeneratorAgent` | `louis_vton/agents/flux_prompt_generator.py` | Generates FLUX-optimized prompts |
+| `build_tryon_prompt` | `louis_vton/utils/description_cleaner.py` | Cleans descriptions and builds prompts |
 | `ComfyUIClient` | `louis_vton/services/comfyui_client.py` | Interfaces with ComfyUI API |
 | `PipelineConfig` | `louis_vton/config.py` | Configuration management |
 
@@ -194,14 +189,13 @@ louis-vton/
 │   ├── popup/                 # Extension UI
 │   └── icons/                 # Extension icons
 ├── louis_vton/
-│   ├── agents/                # LLM agents
-│   │   ├── garment_extractor.py
-│   │   └── flux_prompt_generator.py
+│   ├── agents/                # LLM agents (legacy, not used in main flow)
 │   ├── models/                # Data models
 │   ├── pipeline/              # Main pipeline
-│   └── services/              # External services
+│   ├── services/              # External services (ComfyUI client)
+│   └── utils/                 # Description cleaner, prompt builder
 ├── tests/                     # Test suite (48 tests)
-├── comfyui_workflow.json      # FLUX workflow
+├── comfyui_workflow.json      # FLUX workflow reference
 ├── requirements.txt           # Python dependencies
 └── pytest.ini                 # Test configuration
 ```

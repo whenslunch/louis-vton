@@ -1,7 +1,7 @@
 """FLUX Prompt Generator Agent - creates optimized prompts for FLUX 2 Klein image editing."""
 
 from azure.identity import AzureCliCredential
-from agent_framework import ChatMessage, TextContent
+from agent_framework import ChatMessage, Content
 from agent_framework.azure import AzureOpenAIResponsesClient
 
 
@@ -135,7 +135,7 @@ Generate the optimal prompt."""
         messages = [
             ChatMessage(
                 role="user",
-                content=[TextContent(text=user_message)],
+                content=[Content.from_text(user_message)],
             )
         ]
         
