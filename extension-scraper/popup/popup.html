@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtual Try-On</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    
+    <!-- ==================== SCREEN 1: SELECTION ==================== -->
+    <div id="screen-selection" class="screen">
+      <header>
+        <h1>👗 Virtual Try-On</h1>
+        <p class="subtitle" id="page-url"></p>
+      </header>
+      
+      <!-- Loading State -->
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Scanning page for garment images...</p>
+      </div>
+      
+      <!-- Main Selection Content -->
+      <div id="selection-content" class="hidden">
+        
+        <!-- Garment Images Section -->
+        <div class="section">
+          <div class="section-header">
+            <h2>👕 Select Garment Image</h2>
+            <button id="refresh-btn" class="btn-icon" title="Refresh images">🔄</button>
+          </div>
+          <p class="section-desc">Choose the clothing you want to try on</p>
+          <p class="image-count" id="image-count">0 images found</p>
+          
+          <div class="image-grid" id="garment-images"></div>
+        </div>
+        
+        <!-- Upload Photo Section -->
+        <div class="section">
+          <h2>📷 Upload Your Photo</h2>
+          <p class="section-desc">Upload a photo to see how the garment looks on you</p>
+          
+          <div class="upload-area" id="upload-area">
+            <input type="file" id="model-upload" accept="image/*" hidden>
+            <div class="upload-placeholder" id="upload-placeholder">
+              <span class="upload-icon">📷</span>
+              <span>Click to upload your photo</span>
+            </div>
+            <div class="upload-preview hidden" id="upload-preview">
+              <img id="preview-image" src="" alt="Your photo">
+              <button class="remove-btn" id="remove-photo">✕</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Generate Button -->
+        <div class="generate-section">
+          <button id="generate-btn" class="btn-generate" disabled>
+            ✨ Generate Try-On
+          </button>
+          <p class="generate-hint" id="generate-hint">Select a garment and upload your photo</p>
+        </div>
+      </div>
+      
+      <!-- No Images State -->
+      <div id="no-images" class="no-images hidden">
+        <p>😕 No garment images found on this page.</p>
+        <p class="hint">Navigate to a product page on H&M, Zara, Aritzia, or other fashion retailers.</p>
+        <button id="retry-btn" class="btn">🔄 Try Again</button>
+      </div>
+    </div>
+    
+    <!-- ==================== SCREEN 2: GENERATING ==================== -->
+    <div id="screen-generating" class="screen hidden">
+      <header>
+        <h1>👗 Virtual Try-On</h1>
+      </header>
+      
+      <div class="generating-content">
+        <div class="spinner-large"></div>
+        <p class="generating-text">Generating your try-on image...</p>
+        <p class="generating-hint">This usually takes 15-30 seconds</p>
+      </div>
+    </div>
+    
+    <!-- ==================== SCREEN 3: RESULT ==================== -->
+    <div id="screen-result" class="screen hidden">
+      <header>
+        <h1>👗 Virtual Try-On</h1>
+      </header>
+      
+      <div class="result-content">
+        <h2 class="result-title">🎉 Your Try-On Result</h2>
+        
+        <div class="result-image-container">
+          <img id="result-image" src="" alt="Try-on result">
+        </div>
+        
+        <div class="result-actions">
+          <button id="download-btn" class="btn btn-primary">💾 Download</button>
+          <button id="try-another-btn" class="btn btn-secondary">🔄 Try Another</button>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

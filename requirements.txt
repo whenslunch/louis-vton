@@ -1,0 +1,25 @@
+# IB-VTON Dependencies
+# Core framework
+agent-framework[azure]
+
+# Web server
+fastapi
+uvicorn[standard]
+
+# HTTP client
+httpx
+
+# Image processing
+pillow
+
+# Settings
+pydantic
+pydantic-settings
+
+# Azure authentication
+azure-identity
+
+# Testing (dev)
+pytest
+pytest-asyncio
+pytest-cov

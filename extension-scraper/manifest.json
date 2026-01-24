@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "IB-VTON",
+  "version": "2.1.0",
+  "description": "In-Browser Virtual Try-On - Try on clothing from fashion websites using AI",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*.hm.com/*",
+    "https://*.zara.com/*",
+    "https://*.nordstrom.com/*",
+    "https://*.asos.com/*",
+    "https://*.uniqlo.com/*",
+    "https://*.gap.com/*",
+    "https://*.aritzia.com/*",
+    "https://*.anthropologie.com/*",
+    "https://*.freepeople.com/*",
+    "https://*.urbanoutfitters.com/*",
+    "https://*.mango.com/*",
+    "https://*.revolve.com/*",
+    "https://*.shopbop.com/*",
+    "https://*.net-a-porter.com/*",
+    "http://localhost:8000/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
