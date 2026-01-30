@@ -3,7 +3,7 @@
  * Handles generation requests so they persist even when popup is closed
  */
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://localhost:8001';
 const GENERATION_STATE_KEY = 'generationState';
 
 // Generation state: 'idle' | 'generating' | 'complete' | 'error'
